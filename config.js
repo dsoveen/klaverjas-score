@@ -3,7 +3,7 @@
 // Deze sleutel is niet geheim: de Firestore-regels bepalen wie mag lezen en schrijven.
 window.KLAVERJAS_CONFIG = {
   firebase: {
-    apiKey: "",     // bijv. "AIzaSy..."
-    projectId: ""   // bijv. "klaverjas-12345"
+    apiKey: "AIzaSyBCuvVj1gconjrzVbUkQOhTL9V4h1NeCoA",     // bijv. "AIzaSy..."
+    projectId: "klaverjas-score-database"   // bijv. "klaverjas-12345"
   }
 };
