@@ -10,6 +10,7 @@ Een scoreblok voor klaverjassen dat je als app op je beginscherm zet. Elke tafel
 | `config.js` | De Firebase-gegevens (al ingevuld) |
 | `manifest.webmanifest`, `*.png` | Naam en icoon op het beginscherm |
 | `sw.js` | Zorgt dat de app ook offline opent |
+| `admin.html`, `admin.js` | Beheeroverzicht voor de beheerder van de app |
 
 De Firestore-regels staan niet in deze repository. Ze staan in Firebase zelf, bij **Firestore → Regels**. Pas ze daar aan als dat nodig is.
 
@@ -62,6 +63,20 @@ Maak een nieuwe groep bij voorkeur in de app op het beginscherm. Wie de groep ma
 - **Spelregels per groep.** Het aantal rondes en hoe roem bij verzaken telt, stel je in bij Groep en instellingen.
 - **Meer groepen.** Je kunt lid zijn van meerdere groepen en wisselt tussen groepen via de groepsnaam bovenin.
 - **Verlaten of verwijderen.** Spelers kunnen een groep verlaten. De maker kan de groep met alle potjes verwijderen.
+
+## Beheer
+
+Op `…/klaverjas-score/admin.html` staat een overzicht voor de beheerder: aantal groepen, telefoons en potjes, gespeelde potjes per week, en per groep de leden, potjes, het lopende potje en de laatste activiteit. Een groep kan daar ook worden verwijderd. De pagina staat niet in de app en is niet vindbaar via zoekmachines.
+
+Instellen (eenmalig):
+1. Zet in Firebase bij **Authentication → Sign-in method** ook **E-mail/wachtwoord** aan.
+2. Voeg bij **Authentication → Users** een gebruiker toe met je e-mailadres en een wachtwoord.
+3. Kopieer de **User UID** van die gebruiker en zet die in de Firestore-regels op de plek van `JOUW_BEHEER_UID`. Publiceer de regels.
+4. Open `admin.html` en log in. Lukt het laden niet, dan toont de pagina de UID die in de regels moet staan.
+
+Inloggen in het beheer staat los van de app: de groepen in dezelfde browser blijven gewoon werken.
+
+Let op: als beheerder zie je de namen van groepen en spelers en de scores van alle groepen.
 
 ## Later iets aanpassen
 

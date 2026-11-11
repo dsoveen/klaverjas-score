@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Versienummer: verhoog dit samen met VERSIE in sw.js
-const APP_VERSIE = "1.12";
+const APP_VERSIE = "1.13";
 window.__kjReady = true;
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -47,6 +47,9 @@ function avatar(t, i) {
 }
 function avs(t, cls) { return '<span class="avs ' + (cls || "") + '">' + avatar(t, 0) + avatar(t, 1) + '</span>'; }
 function saveMyGroups() { LS.set(GKEY, myGroups); }
+// Wijziging aan de groep, met tijdstip van laatste activiteit (voor het beheeroverzicht).
+// Niet voor lid worden, verlaten of een nieuwe link: die regels staan alleen die ene wijziging toe.
+function gUpdate(upd) { return updateDoc(gRef, Object.assign({ lastActive: nowIso() }, upd)); }
 function upsertMyGroup(id, patch) {
   const g = myGroups.find(x => x.id === id);
   if (g) Object.assign(g, patch); else myGroups.push(Object.assign({ id }, patch));
@@ -189,7 +192,7 @@ function renderWho() {
 }
 function setWho(p) {
   upsertMyGroup(activeId, { player: p });
-  if (isWriter()) updateDoc(gRef, { "current.writerName": myName() }).catch(failWrite);
+  if (isWriter()) gUpdate({ "current.writerName": myName() }).catch(failWrite);
   render();
 }
 
@@ -210,7 +213,7 @@ function bindWriter() {
 }
 function takeOver() {
   resetDraft();
-  updateDoc(gRef, { "current.writer": uid, "current.writerName": myName() }).then(() => toast("Jij schrijft nu dit potje."), failWrite);
+  gUpdate({ "current.writer": uid, "current.writerName": myName() }).then(() => toast("Jij schrijft nu dit potje."), failWrite);
 }
 
 function renderNew(done) {
@@ -228,7 +231,7 @@ function renderNew(done) {
 function newGame() {
   resetDraft();
   const c = cur();
-  updateDoc(gRef, { current: { id: newId(), rounds: [], writer: c.writer || null, writerName: c.writer ? (c.writerName || "") : "", startedAt: nowIso() } }).catch(failWrite);
+  gUpdate({ current: { id: newId(), rounds: [], writer: c.writer || null, writerName: c.writer ? (c.writerName || "") : "", startedAt: nowIso() } }).catch(failWrite);
 }
 
 // ---------- Invoer (alleen de schrijver) ----------
@@ -321,7 +324,7 @@ function saveRounds(list) {
   const at = c.finishedAt || nowIso();
   if (fin && !c.finishedAt) upd["current.finishedAt"] = at;
   if (!fin && c.finishedAt) upd["current.finishedAt"] = deleteField();
-  updateDoc(gRef, upd).catch(failWrite);
+  gUpdate(upd).catch(failWrite);
   const gdoc = doc(db, "groups", activeId, "games", c.id);
   if (fin) setDoc(gdoc, gameDoc(list, at)).catch(failWrite);
   else if (c.finishedAt) deleteDoc(gdoc).catch(() => {});
@@ -455,7 +458,7 @@ function renderGroupBox() {
   };
   $("gQrBtn").onclick = () => { showQr = !showQr; renderGroupBox(); if (showQr && $("qrBox")) $("qrBox").scrollIntoView({ behavior: "smooth", block: "center" }); };
   if ($("gRotate")) $("gRotate").onclick = () => { updateDoc(gRef, { code: rid(20) }).then(() => toast("Nieuwe link gemaakt."), failWrite); };
-  $("gNameIn").oninput = e => { clearTimeout(nameT); const v = e.target.value.trim(); nameT = setTimeout(() => { if (v) updateDoc(gRef, { name: v }).catch(failWrite); }, 700); };
+  $("gNameIn").oninput = e => { clearTimeout(nameT); const v = e.target.value.trim(); nameT = setTimeout(() => { if (v) gUpdate({ name: v }).catch(failWrite); }, 700); };
   $("gNameIn").onblur = () => setTimeout(render, 800);
   $("gWho").onchange = e => setWho(e.target.value || null);
   $("gRounds").onchange = e => askSetting("rounds", +e.target.value);
@@ -516,7 +519,7 @@ function setWarning() {
 async function applySetting(key, value) {
   // Met de nieuwe regel rekenen: de bijgewerkte groep is mogelijk nog niet terug van Firebase
   const next = Object.assign({}, S(), { [key]: value });
-  try { await updateDoc(gRef, { ["settings." + key]: value }); } catch (e) { failWrite(e); renderGroupBox(); return; }
+  try { await gUpdate({ ["settings." + key]: value }); } catch (e) { failWrite(e); renderGroupBox(); return; }
   syncFinish(next);
 }
 // Na een gewijzigde spelregel kan een potje klaar zijn, weer verder gaan of een andere stand hebben
@@ -526,10 +529,10 @@ function syncFinish(set) {
   const fin = list.length >= set.rounds, gdoc = doc(db, "groups", activeId, "games", c.id);
   if (fin) {
     const at = c.finishedAt || nowIso();
-    if (!c.finishedAt) updateDoc(gRef, { "current.finishedAt": at }).catch(failWrite);
+    if (!c.finishedAt) gUpdate({ "current.finishedAt": at }).catch(failWrite);
     setDoc(gdoc, gameDoc(list, at, set)).catch(failWrite);
   } else if (c.finishedAt) {
-    updateDoc(gRef, { "current.finishedAt": deleteField() }).catch(failWrite);
+    gUpdate({ "current.finishedAt": deleteField() }).catch(failWrite);
     deleteDoc(gdoc).catch(() => {});
   }
 }
@@ -558,7 +561,7 @@ function setPlayer(t, i, patch) {
   const pl = JSON.parse(JSON.stringify(players()));
   pl[t][i] = Object.assign({}, pl[t][i], patch);
   const upd = { players: pl };
-  updateDoc(gRef, upd).catch(failWrite);
+  gUpdate(upd).catch(failWrite);
 }
 function setPhoto(t, i, file) {
   const url = URL.createObjectURL(file), img = new Image();
@@ -640,7 +643,7 @@ async function createGroup() {
   if (ps.some(p => !p)) { $("nMsg").textContent = "Vul de namen van alle vier de spelers in."; return; }
   const ref = doc(collection(db, "groups")), code = rid(20);
   const data = {
-    name: nm, code, owner: uid, createdAt: nowIso(),
+    name: nm, code, owner: uid, createdAt: nowIso(), lastActive: nowIso(),
     members: { [uid]: { code, at: nowIso() } },
     players: { w: [{ n: ps[0], img: null }, { n: ps[1], img: null }], z: [{ n: ps[2], img: null }, { n: ps[3], img: null }] },
     settings: DEFAULT_SETTINGS,
