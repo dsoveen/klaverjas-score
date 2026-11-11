@@ -42,7 +42,7 @@ Spelers hebben geen account nodig. Elke telefoon krijgt op de achtergrond een an
 
 1. Open het adres in Safari en kies **Deel → Zet op beginscherm**. Open de app daarna vanaf het beginscherm.
 2. Vul een groepsnaam en de vier spelers in en tik op **Groep maken**.
-3. Kies bij **Wie ben jij?** jezelf.
+3. Kies bij **Wie ben jij?** jezelf. Houd jij de score bij, tik dan op **Ik schrijf**.
 4. Kopieer bij **Groep en instellingen** de uitnodigingslink en zet die in de groepsapp.
 
 ## 4. Lid worden (de andere spelers)
@@ -53,7 +53,7 @@ De app op het beginscherm heeft op de iPhone eigen opslag, los van Safari. Zie j
 
 ## Hoe het werkt
 
-- **Eén schrijver per potje.** Wie een potje begint, houdt de score bij. Anderen kunnen het met **Overnemen** van hem overnemen, bijvoorbeeld als zijn batterij leeg is.
+- **Eén schrijver per potje.** Wie de score bijhoudt, tikt op **Ik schrijf**. Een andere speler kan het overnemen met **Ik schrijf**, bijvoorbeeld als de batterij van de schrijver leeg is. Bij een nieuw potje blijft dezelfde persoon schrijver.
 - **Live meekijken.** Een opgeslagen ronde staat binnen een paar seconden op de andere telefoons.
 - **Zonder internet.** De schrijver kan doorspelen. Rondes worden verstuurd zodra er weer verbinding is.
 - **Nieuwe link.** De maker van de groep kan bij Groep en instellingen een nieuwe link maken. Wie al lid is, blijft lid. De oude link werkt niet meer voor nieuwe leden.

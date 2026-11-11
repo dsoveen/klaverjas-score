@@ -167,8 +167,8 @@ function renderGroup() {
 function renderWho() {
   const el = $("whoCard");
   const opt = (t, i) => '<button data-p="' + t + i + '">' + avatar(t, i) + '<span>' + esc(pname(t, i)) + '</span></button>';
-  el.innerHTML = '<h3>Wie ben jij?</h3><p>Dan weten de anderen wie de score bijhoudt.</p><div class="opts">' +
-    opt("w", 0) + opt("w", 1) + opt("z", 0) + opt("z", 1) + '</div><button class="linkish" data-p="">Ik kijk alleen mee</button>';
+  el.innerHTML = '<h3>Wie ben jij?</h3><p>Zo zien de anderen wie er schrijft als jij de score bijhoudt.</p><div class="opts">' +
+    opt("w", 0) + opt("w", 1) + opt("z", 0) + opt("z", 1) + '</div><button class="linkish" data-p="">Ik speel niet mee</button>';
   el.querySelectorAll("[data-p]").forEach(b => b.onclick = () => setWho(b.dataset.p || null));
 }
 function setWho(p) {
@@ -180,16 +180,22 @@ function setWho(p) {
 function renderWriter() {
   const el = $("writerBar"), c = cur();
   el.classList.toggle("watch", !isWriter());
-  if (isWriter()) { el.innerHTML = '<span><span class="who">Jij schrijft dit potje.</span> De anderen kijken live mee.</span>'; return; }
+  if (isWriter()) {
+    el.innerHTML = '<span><span class="who">Jij schrijft dit potje.</span> De anderen kijken live mee.</span>' +
+      '<span class="act"><button class="btn small ghost" id="stopBtn">Stoppen met schrijven</button></span>';
+    $("stopBtn").onclick = () => { resetDraft(); updateDoc(gRef, { "current.writer": null, "current.writerName": "" }).catch(failWrite); };
+    return;
+  }
   const wn = c.writerName || "Iemand anders";
-  if (askTake) {
-    el.innerHTML = '<span>Overnemen? Dan kan ' + esc(wn) + ' niet meer invoeren.</span><span class="act"><button class="btn small ghost" id="takeNo">Nee</button><button class="btn small primary" id="takeYes">Overnemen</button></span>';
+  if (c.writer && askTake) {
+    el.innerHTML = '<span><span class="who">' + esc(wn) + '</span> schrijft nu. Wil jij het overnemen?</span>' +
+      '<span class="act"><button class="btn small ghost" id="takeNo">Nee</button><button class="btn small primary" id="takeYes">Ja, ik schrijf</button></span>';
     $("takeNo").onclick = () => { askTake = false; render(); };
     $("takeYes").onclick = () => { askTake = false; takeOver(); };
     return;
   }
-  el.innerHTML = '<span>' + (c.writer ? '<span class="who">' + esc(wn) + '</span> schrijft dit potje. Je kijkt mee.' : 'Niemand schrijft dit potje.') + '</span>' +
-    '<span class="act"><button class="btn small ghost" id="takeBtn">' + (c.writer ? "Overnemen" : "Ik schrijf") + '</button></span>';
+  el.innerHTML = '<span>' + (c.writer ? '<span class="who">' + esc(wn) + '</span> schrijft dit potje. Je kijkt mee.' : 'Nog niemand schrijft dit potje.') + '</span>' +
+    '<span class="act"><button class="btn small ' + (c.writer ? "ghost" : "primary") + '" id="takeBtn">Ik schrijf</button></span>';
   $("takeBtn").onclick = () => { if (c.writer) { askTake = true; render(); } else takeOver(); };
 }
 function takeOver() { resetDraft(); updateDoc(gRef, { "current.writer": uid, "current.writerName": myName() }).catch(failWrite); }
@@ -208,7 +214,8 @@ function renderNew(done) {
 }
 function newGame() {
   resetDraft();
-  updateDoc(gRef, { current: { id: newId(), rounds: [], writer: uid, writerName: myName(), startedAt: nowIso() } }).catch(failWrite);
+  const c = cur();
+  updateDoc(gRef, { current: { id: newId(), rounds: [], writer: c.writer || null, writerName: c.writer ? (c.writerName || "") : "", startedAt: nowIso() } }).catch(failWrite);
 }
 
 // ---------- Invoer (alleen de schrijver) ----------
@@ -401,7 +408,7 @@ function renderGroupBox() {
     '<div class="linkbox"><input class="txt" id="gLink" readonly value="' + esc(linkFor(activeId, group.code)) + '" aria-label="Uitnodigingslink"><button class="btn small ghost" id="gCopy" style="flex:none">Kopieer</button></div>' +
     (isOwner() ? '<button class="linkish" id="gRotate" style="align-self:flex-start">Nieuwe link maken (de oude werkt dan niet meer)</button>' : '') + '</div>' +
     '<div class="blk"><span class="lbl">Naam van de groep</span><input class="txt" id="gNameIn" maxlength="30" value="' + esc(group.name || "") + '"></div>' +
-    '<div class="blk"><span class="lbl">Op deze telefoon ben ik</span><select class="txt" id="gWho">' + opt("", "Ik kijk alleen mee") + opt("w0", pname("w", 0)) + opt("w1", pname("w", 1)) + opt("z0", pname("z", 0)) + opt("z1", pname("z", 1)) + '</select></div>' +
+    '<div class="blk"><span class="lbl">Op deze telefoon ben ik</span><select class="txt" id="gWho">' + opt("", "Ik speel niet mee") + opt("w0", pname("w", 0)) + opt("w1", pname("w", 1)) + opt("z0", pname("z", 0)) + opt("z1", pname("z", 1)) + '</select></div>' +
     '<div class="blk"><span class="lbl">Spelers en foto\'s</span><div id="playersEd"></div></div>' +
     '<div class="blk"><span class="lbl">Spelregels</span>' +
     '<label class="field"><span class="hnote">Aantal rondes per potje</span><select class="txt" id="gRounds">' + [8, 12, 16, 20, 24].map(n => '<option' + (n === s.rounds ? " selected" : "") + '>' + n + '</option>').join("") + '</select></label>' +
@@ -540,7 +547,7 @@ async function createGroup() {
     members: { [uid]: { code, at: nowIso() } },
     players: { w: [{ n: ps[0], img: null }, { n: ps[1], img: null }], z: [{ n: ps[2], img: null }, { n: ps[3], img: null }] },
     settings: DEFAULT_SETTINGS,
-    current: { id: newId(), rounds: [], writer: uid, writerName: "", startedAt: nowIso() }
+    current: { id: newId(), rounds: [], writer: null, writerName: "", startedAt: nowIso() }
   };
   if (!navigator.onLine) { $("nMsg").textContent = "Een groep maken kan alleen met internet."; return; }
   $("nCreate").disabled = true; $("nCreate").textContent = "Groep maken…"; $("nMsg").textContent = "";
