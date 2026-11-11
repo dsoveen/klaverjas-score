@@ -1,84 +1,70 @@
 # Klaverjas Scoreblok
 
-Scoreblok voor klaverjassen als webapp op je beginscherm. Het telt nat, pit, roem en verzaken zelf, en houdt een overzicht van alle potjes bij. Het werkt ook zonder internet. Is Firebase ingesteld, dan wordt het overzicht ook online bewaard.
+Een scoreblok voor klaverjassen dat je als app op je beginscherm zet. Elke tafel maakt een eigen groep en nodigt de andere spelers uit met een link. Eén speler houdt de score bij; de anderen zien de stand live op hun eigen telefoon. Het blok telt nat, pit, roem en verzaken zelf, en houdt per groep een overzicht van alle potjes bij.
 
 ## Bestanden
 
 | Bestand | Wat het doet |
 |---|---|
-| `index.html` | De app zelf |
-| `config.js` | Je Firebase-gegevens (stap 4) |
-| `firestore.rules` | Wie het overzicht mag lezen en schrijven (stap 2) |
+| `index.html`, `app.js` | De app zelf |
+| `config.js` | De Firebase-gegevens (al ingevuld) |
 | `manifest.webmanifest`, `*.png` | Naam en icoon op het beginscherm |
 | `sw.js` | Zorgt dat de app ook offline opent |
 
-Zonder Firebase werkt alles ook. Het overzicht staat dan alleen op het toestel.
+De Firestore-regels staan in `firestore.rules`. Dat bestand plak je in Firebase. Het hoeft niet op GitHub.
 
-## 1. Firebase-project aanmaken (gratis)
+## 1. Firebase instellen (eenmalig)
 
-1. Ga naar <https://console.firebase.google.com> en log in met een Google-account.
-2. Maak een nieuw project aan, bijvoorbeeld `klaverjas`. Google Analytics heb je niet nodig.
-3. Het gratis Spark-abonnement is genoeg. Je hoeft geen betaalgegevens in te vullen.
+Het project `klaverjas-score-database` bestaat al. Er moeten nog drie dingen gebeuren.
 
-## 2. Database aanmaken
+**Firestore aanmaken**
+1. Kies **Databases & Storage → Firestore → Database maken**.
+2. Kies **productiemodus** en als locatie `europe-west4` (Nederland).
 
-1. Open **Firestore Database** en kies **Database maken**.
-2. Kies **productiemodus** en als locatie `europe-west4` (Nederland). De locatie kun je later niet meer wijzigen.
-3. Open het tabblad **Regels**. Plak de inhoud van `firestore.rules` en vervang `JOUW@EMAILADRES.NL` door het e-mailadres uit stap 3.
-4. Klik op **Publiceren**.
+**Regels plakken**
+1. Ga naar **Firestore → Regels**.
+2. Vervang alles door de inhoud van `firestore.rules` en klik op **Publiceren**.
 
-## 3. Inlog aanmaken
+**Anoniem inloggen aanzetten**
+1. Ga naar **Authentication → Aan de slag → Sign-in method**.
+2. Zet **Anoniem** (Anonymous) aan.
 
-1. Open **Authentication** en kies **Aan de slag**.
-2. Zet bij **Sign-in method** de optie **E-mail/wachtwoord** aan.
-3. Voeg bij **Users** een gebruiker toe met je e-mailadres en een wachtwoord.
+Spelers hebben geen account nodig. Elke telefoon krijgt op de achtergrond een anoniem account, en de uitnodigingslink maakt dat account lid van een groep.
 
-Alleen dit e-mailadres komt door de regels uit stap 2. Ook als iemand anders een account aanmaakt, kan die het overzicht niet lezen of wijzigen.
+## 2. Op GitHub Pages zetten
 
-## 4. config.js invullen
-
-1. Open **Projectinstellingen** (het tandwiel) en ga naar **Algemeen**.
-2. Neem de **Project-ID** en de **Web-API-sleutel** over in `config.js`:
-
-```js
-window.KLAVERJAS_CONFIG = {
-  firebase: { apiKey: "AIzaSy...", projectId: "klaverjas-12345" }
-};
-```
-
-Staat er nog geen Web-API-sleutel, voeg dan onder **Je apps** een web-app toe (het `</>`-icoon). Firebase Hosting hoef je daarbij niet aan te zetten.
-
-De sleutel is niet geheim en mag gewoon op GitHub staan. De beveiliging zit in de regels uit stap 2.
-
-## 5. Op GitHub Pages zetten
-
-1. Maak een nieuwe repository, bijvoorbeeld `klaverjas`.
-2. Upload alle bestanden uit deze map naar de hoofdmap van de repository.
-3. Kies in de repository **Settings → Pages → Build and deployment**. Zet Source op **Deploy from a branch**, Branch op `main` en map `/ (root)`, en klik op **Save**.
+1. Maak een repository, bijvoorbeeld `klaverjas`.
+2. Upload alle bestanden uit deze map naar de hoofdmap.
+3. Kies **Settings → Pages**. Zet Source op **Deploy from a branch**, kies branch `main` en map `/ (root)`, en klik op **Save**.
 4. Na ongeveer een minuut staat de app op `https://<gebruikersnaam>.github.io/klaverjas/`.
 
-## 6. Op de iPhone zetten
+## 3. Een groep beginnen
 
-1. Open het adres in **Safari**.
-2. Kies **Deel → Zet op beginscherm**.
-3. Open de app vanaf het beginscherm. Log onderaan bij **Alle potjes** in met het account uit stap 3.
+1. Open het adres in Safari en kies **Deel → Zet op beginscherm**. Open de app daarna vanaf het beginscherm.
+2. Vul een groepsnaam en de vier spelers in en tik op **Groep maken**.
+3. Kies bij **Wie ben jij?** jezelf.
+4. Kopieer bij **Groep en instellingen** de uitnodigingslink en zet die in de groepsapp.
 
-Let op: een app op het beginscherm heeft op de iPhone eigen opslag, los van Safari. Log in en importeer dus in de app, niet in Safari.
+## 4. Lid worden (de andere spelers)
 
-## 7. Gegevens meenemen van de claude.ai-versie
+Open de link op je telefoon. Je zit dan meteen in de groep. Zet de app op je beginscherm via **Deel → Zet op beginscherm**.
 
-1. Open in de claude.ai-versie **Gegevens overzetten** en tik op **Kopieer gegevens**.
-2. Open in de nieuwe app **Gegevens overzetten** en plak de tekst in het vak.
-3. Tik op **Importeer** en daarna op **Ja, vervang lopend potje**.
+De app op het beginscherm heeft op de iPhone eigen opslag, los van Safari. Zie je de groep niet in de app, open dan **Groep en instellingen → Nieuwe groep of lid worden** en plak daar de link.
 
-Het lopende potje, de spelers met foto's en het overzicht komen mee. Geïmporteerde potjes worden online bewaard zodra je bent ingelogd.
+## Hoe het werkt
+
+- **Eén schrijver per potje.** Wie een potje begint, houdt de score bij. Anderen kunnen het met **Overnemen** van hem overnemen, bijvoorbeeld als zijn batterij leeg is.
+- **Live meekijken.** Een opgeslagen ronde staat binnen een paar seconden op de andere telefoons.
+- **Zonder internet.** De schrijver kan doorspelen. Rondes worden verstuurd zodra er weer verbinding is.
+- **Nieuwe link.** De maker van de groep kan bij Groep en instellingen een nieuwe link maken. Wie al lid is, blijft lid. De oude link werkt niet meer voor nieuwe leden.
+- **Spelregels per groep.** Het aantal rondes en hoe roem bij verzaken telt, stel je in bij Groep en instellingen.
+- **Meer groepen.** Je kunt lid zijn van meerdere groepen en wisselt tussen groepen via de groepsnaam bovenin.
+- **Verlaten of verwijderen.** Spelers kunnen een groep verlaten. De maker kan de groep met alle potjes verwijderen.
 
 ## Later iets aanpassen
 
-Verhoog na elke wijziging `VERSIE` in `sw.js`, bijvoorbeeld van `klaverjas-1` naar `klaverjas-2`. Dan haalt de app de nieuwe bestanden op.
+Verhoog na elke wijziging `VERSIE` in `sw.js`, bijvoorbeeld `klaverjas-2` naar `klaverjas-3`. Dan halen de telefoons de nieuwe bestanden op.
 
-## Hoe opslaan werkt
+## Kosten
 
-- Het lopende potje, de foto's en een kopie van het overzicht staan op het toestel zelf.
-- Na ronde 16 gaat het potje naar Firebase. Zonder verbinding wacht het en wordt het later verstuurd. Dat gebeurt als de verbinding terug is of als je de app opnieuw opent.
-- Op een ander toestel zie je het overzicht na inloggen ook.
+Het gratis Spark-abonnement van Firebase is ruim genoeg voor tientallen groepen. Live meekijken kost alleen leesacties als er echt iets verandert.
