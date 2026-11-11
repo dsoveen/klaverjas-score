@@ -22,7 +22,7 @@ const nowIso = () => new Date().toISOString();
 let uid = null, db = null, view = "boot";
 let myGroups = LS.get(GKEY, []), activeId = LS.get(AKEY, null);
 let group = null, gRef = null, gState = "idle", games = [];
-let unsubG = null, unsubH = null, gTimer = null, prevLen = null, prevGameId = null;
+let lastErr = "", unsubG = null, unsubH = null, gTimer = null, prevLen = null, prevGameId = null;
 let draft = blank(), editing = -1, askDel = null, askNew = false, askTake = false, askDanger = false;
 
 // ---------- Hulpfuncties voor de groep ----------
@@ -59,7 +59,7 @@ function parseJoin(s) { const m = /join-([A-Za-z0-9]{6,40})-([A-Za-z0-9]{12,64})
 
 let toastT = null;
 function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 4000); }
-function failWrite(e) { console.warn(e); toast("Opslaan lukte niet" + (e && e.code === "permission-denied" ? ": je hebt geen toegang meer tot deze groep." : ". Probeer het opnieuw.")); }
+function failWrite(e) { console.warn(e); toast("Opslaan lukte niet" + (e && e.code === "permission-denied" ? ": Firebase weigert de toegang." : ". Probeer het opnieuw.") + (e && e.code ? " (" + e.code + ")" : "")); }
 
 // ---------- Telling ----------
 function score(r) {
@@ -103,6 +103,7 @@ function render() {
   }
   if (gState === "gone") {
     $("screenMsg").innerHTML = '<h2>Groep niet beschikbaar</h2><p>Deze groep is verwijderd, of deze telefoon is geen lid meer. Vraag de groep om een nieuwe link.</p>' +
+      (lastErr ? '<p class="hnote">Foutcode: ' + esc(lastErr) + '</p>' : '') +
       '<div class="actions"><button class="btn primary" id="goneDrop">Uit mijn lijst halen</button></div>';
     show(["screenMsg"]);
     $("goneDrop").onclick = () => { removeMyGroup(activeId); next(); };
@@ -491,8 +492,10 @@ function openGroup(id) {
   render();
   gRef = doc(db, "groups", id);
   gTimer = setTimeout(() => { if (gState === "loading") { gState = "slow"; render(); } }, 10000);
-  unsubG = onSnapshot(gRef, snap => {
-    if (!snap.exists()) { gState = "gone"; render(); return; }
+  let tries = 0; lastErr = "";
+  const listen = () => { unsubG = onSnapshot(gRef, snap => {
+    const fromCache = !!(snap.metadata && snap.metadata.fromCache);
+    if (!snap.exists()) { if (!fromCache) { gState = "gone"; render(); } return; }
     const d = snap.data();
     if (!d.members || !d.members[uid]) { gState = "gone"; render(); return; }
     clearTimeout(gTimer);
@@ -505,7 +508,14 @@ function openGroup(id) {
     if (editing >= n) resetDraft();
     if (!isWriter()) { editing = -1; }
     render();
-  }, () => { gState = "gone"; render(); });
+  }, e => {
+    // Een geweigerde of afgebroken verbinding een paar keer opnieuw proberen voordat we opgeven
+    lastErr = (e && (e.code || e.message)) || "onbekend";
+    console.warn("groep", e);
+    if (tries < 3 && activeId === id && view === "group") { tries++; setTimeout(() => { if (activeId === id && view === "group") listen(); }, 1200 * tries); }
+    else { gState = "gone"; render(); }
+  }); };
+  listen();
   unsubH = onSnapshot(collection(db, "groups", id, "games"), qs => {
     games = qs.docs.map(d => Object.assign({ id: d.id }, d.data()));
     if (gState === "ok") renderHist();
@@ -514,12 +524,11 @@ function openGroup(id) {
 function next() { if (myGroups.length) openGroup(myGroups[0].id); else showWelcome(); }
 
 function showWelcome() {
-  stopListening(); view = "welcome"; gState = "idle"; render();
+  stopListening(); view = "welcome"; gState = "idle"; $("nMsg").textContent = ""; render();
 }
 function renderWelcome() {
   show(["welcome"]);
   $("nBack").hidden = !myGroups.length;
-  $("nMsg").textContent = "";
 }
 async function createGroup() {
   const nm = $("nGroup").value.trim(), ps = ["n10", "n11", "n20", "n21"].map(i => $(i).value.trim());
@@ -533,11 +542,21 @@ async function createGroup() {
     settings: DEFAULT_SETTINGS,
     current: { id: newId(), rounds: [], writer: uid, writerName: "", startedAt: nowIso() }
   };
-  $("nCreate").disabled = true;
-  setDoc(ref, data).catch(e => { console.warn(e); toast("De groep kon niet worden gemaakt. Probeer het opnieuw."); removeMyGroup(ref.id); next(); });
+  if (!navigator.onLine) { $("nMsg").textContent = "Een groep maken kan alleen met internet."; return; }
+  $("nCreate").disabled = true; $("nCreate").textContent = "Groep maken…"; $("nMsg").textContent = "";
+  try {
+    // Eerst wachten tot Firebase de groep heeft. Anders vraagt de app hem op voordat hij bestaat en weigert Firebase dat.
+    await setDoc(ref, data);
+  } catch (e) {
+    console.warn(e);
+    $("nMsg").textContent = "De groep kon niet worden gemaakt (" + (e.code || e.message) + "). " +
+      (e.code === "permission-denied" ? "Controleer of de Firestore-regels zijn gepubliceerd." : "Controleer je verbinding en probeer het opnieuw.");
+    $("nCreate").disabled = false; $("nCreate").textContent = "Groep maken";
+    return;
+  }
+  $("nCreate").disabled = false; $("nCreate").textContent = "Groep maken";
   upsertMyGroup(ref.id, { name: nm });
   ["nGroup", "n10", "n11", "n20", "n21"].forEach(i => { $(i).value = ""; });
-  $("nCreate").disabled = false;
   openGroup(ref.id);
   setTimeout(() => { $("groupBox").open = true; }, 50);
 }
