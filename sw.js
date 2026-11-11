@@ -1,5 +1,5 @@
 // Houdt het scoreblok bruikbaar zonder internet. Verhoog VERSIE na een wijziging.
-const VERSIE = "klaverjas-6";
+const VERSIE = "klaverjas-8";
 const BASIS = ["./", "./index.html", "./app.js", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -21,8 +21,9 @@ self.addEventListener("fetch", e => {
       return r;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match("./index.html"))));
   } else if (u.hostname === "fonts.googleapis.com" || u.hostname === "fonts.gstatic.com" ||
-             (u.hostname === "www.gstatic.com" && u.pathname.startsWith("/firebasejs/"))) {
-    // Lettertypes en de Firebase-bibliotheek (vaste versie): opgeslagen kopie eerst
+             (u.hostname === "www.gstatic.com" && u.pathname.startsWith("/firebasejs/")) ||
+             (u.hostname === "cdn.jsdelivr.net" && u.pathname.startsWith("/npm/qrcode-generator@"))) {
+    // Lettertypes, de Firebase-bibliotheek en de QR-bibliotheek (vaste versies): opgeslagen kopie eerst
     e.respondWith(caches.match(req).then(r => r || fetch(req).then(n => {
       const kopie = n.clone(); caches.open(VERSIE).then(c => c.put(req, kopie)); return n;
     })));

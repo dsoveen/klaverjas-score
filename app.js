@@ -23,7 +23,7 @@ let uid = null, db = null, view = "boot";
 let myGroups = LS.get(GKEY, []), activeId = LS.get(AKEY, null);
 let group = null, gRef = null, gState = "idle", games = [];
 let lastErr = "", unsubG = null, unsubH = null, gTimer = null, prevLen = null, prevGameId = null;
-let draft = blank(), editing = -1, askDel = null, askNew = false, askTake = false, askDanger = false, pendingSet = null;
+let draft = blank(), editing = -1, askDel = null, askNew = false, askTake = false, askDanger = false, pendingSet = null, showQr = false;
 
 // ---------- Hulpfuncties voor de groep ----------
 function S() { return Object.assign({}, DEFAULT_SETTINGS, (group && group.settings) || {}); }
@@ -54,8 +54,18 @@ function removeMyGroup(id) {
   myGroups = myGroups.filter(g => g.id !== id); saveMyGroups();
   if (activeId === id) { activeId = null; LS.set(AKEY, null); }
 }
-function linkFor(id, code) { return location.origin + location.pathname + "#join-" + id + "-" + code; }
-function parseJoin(s) { const m = /join-([A-Za-z0-9]{6,40})-([A-Za-z0-9]{12,64})/.exec(s || ""); return m ? { id: m[1], code: m[2] } : null; }
+// De uitnodiging staat in het adres (?join=...). Oude links met #join- werken ook nog.
+function linkFor(id, code) { return location.origin + location.pathname + "?join=" + id + "-" + code; }
+function parseJoin(s) { const m = /join[-=]([A-Za-z0-9]{6,40})-([A-Za-z0-9]{12,64})/.exec(s || ""); return m ? { id: m[1], code: m[2] } : null; }
+// Als app op het beginscherm (eigen opslag, los van Safari) of gewoon in de browser?
+const standalone = (() => { try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } })();
+// In de browser houden we de uitnodiging in de adresbalk. 'Zet op beginscherm' bewaart dat adres,
+// zodat de app op het beginscherm de groep kan openen ondanks de lege opslag.
+function keepJoinInUrl(id, code) {
+  if (standalone || !id || !code) return;
+  const want = "?join=" + id + "-" + code;
+  if (location.search !== want || location.hash) { try { history.replaceState(null, "", location.pathname + want); } catch (e) {} }
+}
 
 let toastT = null;
 function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 4000); }
@@ -89,7 +99,7 @@ function totals() { return totalsOf(rounds()); }
 
 // ---------- Weergave ----------
 const SECTIONS = ["bootMsg", "board", "screenMsg", "welcome", "whoCard", "winCard", "entryCard", "sheet", "foot", "hist", "groupBox", "rulesBox"];
-function show(list) { SECTIONS.forEach(id => { $(id).hidden = !list.includes(id); }); }
+function show(list) { SECTIONS.forEach(id => { $(id).hidden = !list.includes(id); }); $("homeTip").hidden = true; }
 
 function msg(html) { view = "msg"; $("screenMsg").innerHTML = html; show(["screenMsg"]); }
 
@@ -137,6 +147,7 @@ function renderGroup() {
   $("verzW").textContent = nw; $("verzZ").textContent = nz;
 
   renderWho();
+  $("homeTip").hidden = standalone || LS.get("kj-tip-beginscherm", false) || !matchMedia("(pointer: coarse)").matches;
   if (done) renderWin(t);
 
   // rijen, nieuwste boven
@@ -407,6 +418,8 @@ function renderGroupBox() {
   let html =
     '<div class="blk"><span class="lbl">Uitnodigen</span><p>Stuur deze link naar de andere spelers. Wie hem opent, kijkt live mee. Nu ' + memberCount + (memberCount === 1 ? " telefoon" : " telefoons") + ' in deze groep.</p>' +
     '<div class="linkbox"><input class="txt" id="gLink" readonly value="' + esc(linkFor(activeId, group.code)) + '" aria-label="Uitnodigingslink"><button class="btn small ghost" id="gCopy" style="flex:none">Kopieer</button></div>' +
+    '<button class="btn small ghost" id="gQrBtn" style="align-self:flex-start">' + (showQr ? "Verberg QR-code" : "Toon QR-code") + '</button>' +
+    (showQr ? qrBlock(linkFor(activeId, group.code)) : '') +
     (isOwner() ? '<button class="linkish" id="gRotate" style="align-self:flex-start">Nieuwe link maken (de oude werkt dan niet meer)</button>' : '') + '</div>' +
     '<div class="blk"><span class="lbl">Naam van de groep</span><input class="txt" id="gNameIn" maxlength="30" value="' + esc(group.name || "") + '"></div>' +
     '<div class="blk"><span class="lbl">Op deze telefoon ben ik</span><select class="txt" id="gWho">' + opt("", "Ik speel niet mee") + opt("w0", pname("w", 0)) + opt("w1", pname("w", 1)) + opt("z0", pname("z", 0)) + opt("z1", pname("z", 1)) + '</select></div>' +
@@ -429,6 +442,7 @@ function renderGroupBox() {
     const fb = () => { $("gLink").focus(); $("gLink").select(); toast("Selecteer en kopieer de link."); };
     try { navigator.clipboard.writeText(t).then(() => toast("Link gekopieerd. Zet hem in de groepsapp."), fb); } catch (e) { fb(); }
   };
+  $("gQrBtn").onclick = () => { showQr = !showQr; renderGroupBox(); if (showQr && $("qrBox")) $("qrBox").scrollIntoView({ behavior: "smooth", block: "center" }); };
   if ($("gRotate")) $("gRotate").onclick = () => { updateDoc(gRef, { code: rid(20) }).then(() => toast("Nieuwe link gemaakt."), failWrite); };
   $("gNameIn").oninput = e => { clearTimeout(nameT); const v = e.target.value.trim(); nameT = setTimeout(() => { if (v) updateDoc(gRef, { name: v }).catch(failWrite); }, 700); };
   $("gNameIn").onblur = () => setTimeout(render, 800);
@@ -445,6 +459,17 @@ function renderGroupBox() {
   bindWriter();
   renderPlayers();
 }
+// ---------- QR-code van de uitnodiging ----------
+function qrBlock(text) {
+  let svg = null;
+  try {
+    if (typeof window.qrcode === "function") { const q = window.qrcode(0, "M"); q.addData(text); q.make(); svg = q.createSvgTag({ cellSize: 6, margin: 3, scalable: true }); }
+  } catch (e) { console.warn(e); }
+  if (!svg) return '<p class="hnote">De QR-code kan nu niet worden getoond. Open de app één keer met internet, daarna werkt het ook offline.</p>';
+  return '<div class="qr" id="qrBox"><div class="qrimg" role="img" aria-label="QR-code met de uitnodigingslink">' + svg + '</div>' +
+    '<p>Laat de ander deze code scannen met de camera van de telefoon. Zet daarna in Safari het scoreblok op het beginscherm.</p></div>';
+}
+
 // ---------- Spelregels wijzigen tijdens een potje ----------
 function askSetting(key, value) {
   if (!rounds().length) { applySetting(key, value); return; }   // nog niets gespeeld: geen gevolgen
@@ -567,6 +592,7 @@ function openGroup(id) {
     if (!d.members || !d.members[uid]) { gState = "gone"; render(); return; }
     clearTimeout(gTimer);
     group = d; gState = "ok";
+    keepJoinInUrl(id, d.code);
     if (me().name !== d.name) upsertMyGroup(id, { name: d.name });
     const c = cur(), n = rounds().length;
     if (prevLen !== null && prevGameId === c.id && prevLen < R() && n >= R()) { setTimeout(() => { $("winCard").scrollIntoView({ behavior: "smooth", block: "start" }); celebrate(); }, 250); }
@@ -635,14 +661,14 @@ async function joinGroup(id, code) {
     console.warn(e);
     const offline = !navigator.onLine;
     msg('<h2>Deze link werkt niet</h2><p class="bad">' + (offline ? "Je bent offline. Open de link opnieuw als je verbinding hebt." : "De link is verlopen of klopt niet. Vraag de groep om de nieuwste link.") + '</p><div class="actions"><button class="btn primary" id="jOk">Verder</button></div>');
-    $("jOk").onclick = () => { clearHash(); next(); };
+    $("jOk").onclick = () => { clearJoin(); next(); };
     return;
   }
-  clearHash();
+  if (standalone) clearJoin();
   if (!myGroups.some(g => g.id === id)) upsertMyGroup(id, { name: "" });
   openGroup(id);
 }
-function clearHash() { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { location.hash = ""; } }
+function clearJoin() { try { history.replaceState(null, "", location.pathname); } catch (e) { location.hash = ""; } }
 
 // ---------- Gebeurtenissen ----------
 $("playW").onclick = () => { draft.p = "w"; renderForm(); };
@@ -675,6 +701,7 @@ $("nJoin").onclick = () => {
   $("nLink").value = ""; joinGroup(j.id, j.code);
 };
 addEventListener("hashchange", () => { const j = parseJoin(location.hash); if (j && uid) joinGroup(j.id, j.code); });
+$("homeClose").onclick = () => { LS.set("kj-tip-beginscherm", true); $("homeTip").hidden = true; };
 
 // ---------- Opstarten ----------
 function boot() {
@@ -694,8 +721,10 @@ function boot() {
     }
     uid = u.uid;
     if (started) return; started = true;
-    const j = parseJoin(location.hash);
-    if (j) joinGroup(j.id, j.code);
+    const j = parseJoin(location.search + location.hash);
+    // Al lid (bijv. de app op het beginscherm start met de uitnodiging in het adres): gewoon openen
+    if (j && myGroups.some(g => g.id === j.id)) { if (standalone) clearJoin(); openGroup(activeId && myGroups.some(g => g.id === activeId) ? activeId : j.id); }
+    else if (j) joinGroup(j.id, j.code);
     else if (activeId && myGroups.some(g => g.id === activeId)) openGroup(activeId);
     else next();
   });

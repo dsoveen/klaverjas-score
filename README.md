@@ -43,13 +43,15 @@ Spelers hebben geen account nodig. Elke telefoon krijgt op de achtergrond een an
 1. Open het adres in Safari en kies **Deel → Zet op beginscherm**. Open de app daarna vanaf het beginscherm.
 2. Vul een groepsnaam en de vier spelers in en tik op **Groep maken**.
 3. Kies bij **Wie ben jij?** jezelf. Als maker van de groep schrijf jij de score; een ander kan dat later overnemen.
-4. Kopieer bij **Groep en instellingen** de uitnodigingslink en zet die in de groepsapp.
+4. Kopieer bij **Groep en instellingen** de uitnodigingslink en zet die in de groepsapp. Aan tafel kan het sneller: tik op **Toon QR-code** en laat de anderen die scannen met hun camera.
 
 ## 4. Lid worden (de andere spelers)
 
-Open de link op je telefoon. Je zit dan meteen in de groep. Zet de app op je beginscherm via **Deel → Zet op beginscherm**.
+Open de link, of scan de QR-code met je camera. Je zit dan meteen in de groep. Zet de app op je beginscherm via **Deel → Zet op beginscherm**.
 
-De app op het beginscherm heeft op de iPhone eigen opslag, los van Safari. Zie je de groep niet in de app, open dan **Groep en instellingen → Nieuwe groep of lid worden** en plak daar de link.
+De app op het beginscherm heeft op de iPhone eigen opslag, los van Safari. Daarom houdt de app de uitnodiging in de adresbalk; de app op het beginscherm wordt zo bij de eerste keer openen zelf lid. Zie je de groep toch niet, open dan **Nieuwe groep of lid worden** en plak daar de link.
+
+Maak een nieuwe groep bij voorkeur in de app op het beginscherm. Wie de groep maakt, is beheerder (nieuwe link maken, groep verwijderen), en dat geldt alleen voor de plek waar de groep is gemaakt.
 
 ## Hoe het werkt
 

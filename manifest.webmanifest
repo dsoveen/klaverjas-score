@@ -3,7 +3,6 @@
   "short_name": "Klaverjas",
   "description": "Scoreblok voor klaverjassen",
   "lang": "nl",
-  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#edf1ec",

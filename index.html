@@ -268,6 +268,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 .glist2 button { text-align: left; padding: 10px 12px; border-radius: 10px; background: var(--sunk); font-weight: 600; }
 .dz { border-top: 1px solid var(--line); padding-top: 14px; }
 .btn.outline { border: 1px solid var(--red); color: var(--red); background: transparent; }
+.hometip { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; background: var(--felt-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.45; }
+.hometip .del { color: var(--muted); font-size: 18px; padding: 0 4px; flex: none; }
+.qr { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.qrimg { background: #ffffff; padding: 10px; border-radius: 12px; width: min(260px, 100%); line-height: 0; }
+.qrimg svg { width: 100%; height: auto; display: block; }
+.qr p { margin: 0; font-size: 14px; color: var(--muted); max-width: 32ch; }
 .setwarn { background: var(--gold-soft); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .setwarn b { color: var(--gold); }
 .setwarn p { margin: 0; }
@@ -305,6 +311,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
     <p class="bad" id="nMsg" aria-live="polite"></p>
   </section>
 
+  <div class="hometip" id="homeTip" hidden>
+    <span><b>Tip:</b> zet het scoreblok op je beginscherm. Tik in Safari op <b>Deel</b> en kies <b>Zet op beginscherm</b>. De groep gaat mee.</span>
+    <button class="del" id="homeClose" aria-label="Tip sluiten">×</button>
+  </div>
   <section class="pick" id="whoCard" hidden></section>
   <section class="win" id="winCard" hidden aria-live="polite"></section>
 
@@ -394,6 +404,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 <canvas id="fx" hidden></canvas>
 <div class="toast" id="toast" hidden role="status"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
 <script src="config.js"></script>
 <script>
   setTimeout(function () {
