@@ -23,7 +23,7 @@ let uid = null, db = null, view = "boot";
 let myGroups = LS.get(GKEY, []), activeId = LS.get(AKEY, null);
 let group = null, gRef = null, gState = "idle", games = [];
 let lastErr = "", unsubG = null, unsubH = null, gTimer = null, prevLen = null, prevGameId = null;
-let draft = blank(), editing = -1, askDel = null, askNew = false, askTake = false, askDanger = false;
+let draft = blank(), editing = -1, askDel = null, askNew = false, askTake = false, askDanger = false, pendingSet = null;
 
 // ---------- Hulpfuncties voor de groep ----------
 function S() { return Object.assign({}, DEFAULT_SETTINGS, (group && group.settings) || {}); }
@@ -62,13 +62,14 @@ function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false
 function failWrite(e) { console.warn(e); toast("Opslaan lukte niet" + (e && e.code === "permission-denied" ? ": Firebase weigert de toegang." : ". Probeer het opnieuw.") + (e && e.code ? " (" + e.code + ")" : "")); }
 
 // ---------- Telling ----------
-function score(r) {
+function score(r, set) {
+  const st = set || S();
   const o = r.p === "w" ? "z" : "w";
   const roemAll = r.rw + r.rz;
   const out = { w: 0, z: 0, flag: null };
   if (r.v) {
     const other = r.v === "w" ? "z" : "w";
-    out[other] = 162 + (S().verzRoem === "eigen" ? (other === "w" ? r.rw : r.rz) : roemAll);
+    out[other] = 162 + (st.verzRoem === "eigen" ? (other === "w" ? r.rw : r.rz) : roemAll);
     out.flag = "verz"; out.who = r.v;
     return out;
   }
@@ -83,7 +84,7 @@ function score(r) {
   out[o] = total; out.flag = "nat"; out.who = r.p;
   return out;
 }
-function totalsOf(list) { let w = 0, z = 0; list.forEach(r => { const s = score(r); w += s.w; z += s.z; }); return { w, z }; }
+function totalsOf(list, set) { let w = 0, z = 0; list.forEach(r => { const s = score(r, set); w += s.w; z += s.z; }); return { w, z }; }
 function totals() { return totalsOf(rounds()); }
 
 // ---------- Weergave ----------
@@ -281,15 +282,16 @@ function showSummary() {
   $("summary").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function gameDoc(list, at) {
-  const t = totalsOf(list), c = { pit: { w: 0, z: 0 }, nat: { w: 0, z: 0 }, roem: { w: 0, z: 0 } };
+function gameDoc(list, at, set) {
+  set = set || S();
+  const t = totalsOf(list, set), c = { pit: { w: 0, z: 0 }, nat: { w: 0, z: 0 }, roem: { w: 0, z: 0 } };
   list.forEach(r => {
-    const s = score(r);
+    const s = score(r, set);
     if (s.flag === "pit") c.pit[s.who]++;
     if (s.flag === "nat") c.nat[s.who]++;
     if (!r.v) { c.roem.w += r.rw; c.roem.z += r.rz; }
   });
-  return { at, names: { w: name("w"), z: name("z") }, score: t, pit: c.pit, nat: c.nat, roem: c.roem, rounds: list, settings: S() };
+  return { at, names: { w: name("w"), z: name("z") }, score: t, pit: c.pit, nat: c.nat, roem: c.roem, rounds: list, settings: set };
 }
 function saveRounds(list) {
   if (!isWriter()) { toast("Iemand anders schrijft nu dit potje."); resetDraft(); render(); return; }
@@ -412,7 +414,9 @@ function renderGroupBox() {
     '<div class="blk"><span class="lbl">Spelers en foto\'s</span><div id="playersEd"></div></div>' +
     '<div class="blk"><span class="lbl">Spelregels</span>' +
     '<label class="field"><span class="hnote">Aantal rondes per potje</span><select class="txt" id="gRounds">' + [8, 12, 16, 20, 24].map(n => '<option' + (n === s.rounds ? " selected" : "") + '>' + n + '</option>').join("") + '</select></label>' +
-    '<label class="field"><span class="hnote">Bij verzaken krijgt de tegenpartij 162 plus</span><select class="txt" id="gVerz"><option value="alle"' + (s.verzRoem !== "eigen" ? " selected" : "") + '>alle opgegeven roem</option><option value="eigen"' + (s.verzRoem === "eigen" ? " selected" : "") + '>alleen hun eigen roem</option></select></label></div>' +
+    (pendingSet && pendingSet.key === "rounds" ? setWarning() : '') +
+    '<label class="field"><span class="hnote">Bij verzaken krijgt de tegenpartij 162 plus</span><select class="txt" id="gVerz"><option value="alle"' + (s.verzRoem !== "eigen" ? " selected" : "") + '>alle opgegeven roem</option><option value="eigen"' + (s.verzRoem === "eigen" ? " selected" : "") + '>alleen hun eigen roem</option></select></label>' +
+    (pendingSet && pendingSet.key === "verzRoem" ? setWarning() : '') + '</div>' +
     '<div class="blk"><span class="lbl">Andere groepen</span><div class="glist2">' + others.map(g => '<button data-g="' + esc(g.id) + '">' + esc(g.name || "Naamloze groep") + '</button>').join("") + '</div>' +
     '<button class="btn small ghost" id="gNew" style="align-self:flex-start">Nieuwe groep of lid worden</button></div>' +
     '<div class="blk dz">';
@@ -429,8 +433,10 @@ function renderGroupBox() {
   $("gNameIn").oninput = e => { clearTimeout(nameT); const v = e.target.value.trim(); nameT = setTimeout(() => { if (v) updateDoc(gRef, { name: v }).catch(failWrite); }, 700); };
   $("gNameIn").onblur = () => setTimeout(render, 800);
   $("gWho").onchange = e => setWho(e.target.value || null);
-  $("gRounds").onchange = e => updateDoc(gRef, { "settings.rounds": +e.target.value }).catch(failWrite);
-  $("gVerz").onchange = e => updateDoc(gRef, { "settings.verzRoem": e.target.value }).catch(failWrite);
+  $("gRounds").onchange = e => askSetting("rounds", +e.target.value);
+  $("gVerz").onchange = e => askSetting("verzRoem", e.target.value);
+  if ($("setNo")) $("setNo").onclick = () => { pendingSet = null; renderGroupBox(); };
+  if ($("setYes")) $("setYes").onclick = () => { const p = pendingSet; pendingSet = null; applySetting(p.key, p.value); };
   ed.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { $("groupBox").open = false; openGroup(b.dataset.g); scrollTo(0, 0); });
   $("gNew").onclick = () => { $("groupBox").open = false; showWelcome(); };
   if ($("dzBtn")) $("dzBtn").onclick = () => { askDanger = true; renderGroupBox(); };
@@ -438,6 +444,59 @@ function renderGroupBox() {
   if ($("dzYes")) $("dzYes").onclick = () => { askDanger = false; isOwner() ? deleteGroup() : leaveGroup(); };
   renderPlayers();
 }
+// ---------- Spelregels wijzigen tijdens een potje ----------
+function askSetting(key, value) {
+  if (!rounds().length) { applySetting(key, value); return; }   // nog niets gespeeld: geen gevolgen
+  pendingSet = { key, value };
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  renderGroupBox();
+  const w = $("setWarn"); if (w) w.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function setWarning() {
+  const { key, value } = pendingSet, list = rounds(), n = list.length, c = cur(), s = S();
+  const next = Object.assign({}, s, { [key]: value });
+  let lines = [];
+  if (key === "rounds") {
+    const wasDone = n >= s.rounds, willDone = n >= value;
+    lines.push("Er " + (n === 1 ? "is 1 ronde" : "zijn " + n + " rondes") + " gespeeld van het lopende potje.");
+    if (!wasDone && willDone) lines.push("Met " + value + " rondes is het potje meteen afgelopen" + (n > value ? ", en alle " + n + " rondes tellen mee" : "") + ". Het komt dan in het overzicht.");
+    else if (wasDone && !willDone) lines.push("Het potje was al afgelopen. Met " + value + " rondes gaat het weer verder, en het verdwijnt uit het overzicht tot het opnieuw klaar is.");
+    else if (wasDone && willDone) lines.push("Het potje blijft afgelopen.");
+    else lines.push("Het lopende potje duurt dan " + value + " rondes in plaats van " + s.rounds + ".");
+  } else {
+    const k = list.filter(r => r.v).length;
+    const a = totalsOf(list, s), b = totalsOf(list, next);
+    if (!k) lines.push("Dit geldt ook voor het lopende potje. Daarin is nog niet verzaakt, dus de stand blijft gelijk.");
+    else lines.push("In het lopende potje is " + (k === 1 ? "1 keer" : k + " keer") + " verzaakt. De stand wordt opnieuw berekend: " +
+      a.w + " – " + a.z + " wordt " + b.w + " – " + b.z + ".");
+  }
+  if (key === "verzRoem" && n >= s.rounds) lines.push("Dit afgelopen potje wordt in het overzicht bijgewerkt. Eerdere potjes blijven zoals ze waren.");
+  else lines.push("Potjes die al in het overzicht staan, blijven zoals ze waren.");
+  const label = key === "rounds" ? value + " rondes" : (value === "eigen" ? "alleen eigen roem bij verzaken" : "alle roem bij verzaken");
+  return '<div class="setwarn" id="setWarn" role="alert"><b>Spelregel wijzigen tijdens een potje</b>' + lines.map(l => '<p>' + esc(l) + '</p>').join("") +
+    '<div class="actions"><button class="btn small ghost" id="setNo">Annuleer</button><button class="btn small primary" id="setYes">Ja, ' + esc(label) + '</button></div></div>';
+}
+async function applySetting(key, value) {
+  // Met de nieuwe regel rekenen: de bijgewerkte groep is mogelijk nog niet terug van Firebase
+  const next = Object.assign({}, S(), { [key]: value });
+  try { await updateDoc(gRef, { ["settings." + key]: value }); } catch (e) { failWrite(e); renderGroupBox(); return; }
+  syncFinish(next);
+}
+// Na een gewijzigde spelregel kan een potje klaar zijn, weer verder gaan of een andere stand hebben
+function syncFinish(set) {
+  const c = cur(), list = rounds();
+  if (!list.length) return;
+  const fin = list.length >= set.rounds, gdoc = doc(db, "groups", activeId, "games", c.id);
+  if (fin) {
+    const at = c.finishedAt || nowIso();
+    if (!c.finishedAt) updateDoc(gRef, { "current.finishedAt": at }).catch(failWrite);
+    setDoc(gdoc, gameDoc(list, at, set)).catch(failWrite);
+  } else if (c.finishedAt) {
+    updateDoc(gRef, { "current.finishedAt": deleteField() }).catch(failWrite);
+    deleteDoc(gdoc).catch(() => {});
+  }
+}
+
 function renderPlayers() {
   const ed = $("playersEd"); if (!ed) return; ed.innerHTML = "";
   ["w", "z"].forEach((t, ti) => {
