@@ -231,14 +231,15 @@ function newGame() {
 
 // ---------- Invoer (alleen de schrijver) ----------
 function blank() { return { p: null, w: null, z: null, rw: 0, rz: 0, v: null }; }
-function resetDraft() { editing = -1; draft = blank(); const vb = $("verzBox"); if (vb) vb.open = false; }
+let needP = false;   // pas na een poging tot opslaan zonder keuze melden
+function resetDraft() { editing = -1; draft = blank(); needP = false; const vb = $("verzBox"); if (vb) vb.open = false; }
 function draftComplete() { return draft.w !== null && draft.z !== null && draft.w + draft.z === 162; }
 
 function renderForm() {
   $("summary").hidden = true; $("formActions").hidden = false;
   const nr = editing >= 0 ? editing + 1 : rounds().length + 1;
   $("formTitle").textContent = (editing >= 0 ? "Ronde " + nr + " wijzigen" : "Ronde " + nr) + " · wie gaat?";
-  $("playSeg").classList.toggle("need", !draft.p);
+  $("playSeg").classList.toggle("need", needP && !draft.p);
   $("playW").setAttribute("aria-pressed", draft.p === "w"); $("playZ").setAttribute("aria-pressed", draft.p === "z");
   $("colW").classList.toggle("playing", draft.p === "w"); $("colZ").classList.toggle("playing", draft.p === "z");
   $("verzW").setAttribute("aria-pressed", draft.v === "w"); $("verzZ").setAttribute("aria-pressed", draft.v === "z");
@@ -251,11 +252,16 @@ function renderForm() {
   $("cancelEdit").hidden = editing < 0; $("deleteRound").hidden = editing < 0;
   $("save").textContent = editing >= 0 ? "Wijziging opslaan" : "Ronde opslaan";
   const pv = $("preview");
-  const ok = draft.p && (draft.v || draftComplete());
+  const ok = draft.v || draftComplete();
   $("save").disabled = !ok;
-  if (!draft.p) { pv.innerHTML = '<span>Kies eerst wie er gaat.</span>'; return; }
+  pv.hidden = false;
   if (!ok) {
     pv.innerHTML = draft.w !== null && draft.z !== null && draft.w + draft.z !== 162 ? '<span class="err">Samen moet het 162 zijn.</span>' : '<span>Vul de kaartpunten van één koppel in.</span>';
+    return;
+  }
+  if (!draft.p) {
+    // Geen standaardmelding; alleen een fout als iemand opslaat zonder te kiezen
+    if (needP) pv.innerHTML = '<span class="err">Kies eerst wie er gaat.</span>'; else pv.hidden = true;
     return;
   }
   const s = score(buildRound());
@@ -685,7 +691,11 @@ $("ptsW").addEventListener("blur", onBlur); $("ptsZ").addEventListener("blur", o
 document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
   const k = b.dataset.t === "w" ? "rw" : "rz", v = +b.dataset.v; draft[k] = v === 0 ? 0 : draft[k] + v; renderForm();
 }));
-$("save").onclick = () => { if (!$("save").disabled) showSummary(); };
+$("save").onclick = () => {
+  if ($("save").disabled) return;
+  if (!draft.p) { needP = true; renderForm(); $("playSeg").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  showSummary();
+};
 $("sumBack").onclick = () => { $("summary").hidden = true; $("formActions").hidden = false; };
 $("sumOk").onclick = () => {
   const r = buildRound(), list = rounds().slice();
