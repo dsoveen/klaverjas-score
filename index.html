@@ -100,13 +100,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 /* Invoer */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunk); border-radius: 10px; padding: 3px; gap: 3px; }
-.seg button { padding: 10px 6px; border-radius: 8px; font-weight: 600; font-size: 15px; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+/* Twee losse keuzeknoppen naast elkaar */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg button { min-height: 48px; padding: 8px 8px; border-radius: 10px; font-weight: 600; font-size: 15px; color: var(--fg);
+  background: var(--surface); border: 1.5px solid var(--line); box-shadow: 0 1px 2px rgba(0,0,0,.08); transition: background .12s, border-color .12s; }
+.seg button:active { transform: translateY(1px); }
+.seg button[aria-pressed="true"] { background: var(--felt); border-color: var(--felt); color: var(--felt-ink); box-shadow: none; }
+.seg.verz button[aria-pressed="true"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
 .seg.play button { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
 .seg.play button span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seg.play button[aria-pressed="true"] .av { border-color: var(--surface); }
-.seg.need { box-shadow: 0 0 0 2px var(--gold); }
+.seg.play button .av { border-color: var(--surface); }
+.seg.play button[aria-pressed="true"] .av { border-color: var(--felt); }
+.seg.need button { border-color: var(--gold); }
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .col { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .col h3 { margin: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -301,7 +306,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
   </section>
 
   <section class="pick" id="whoCard" hidden></section>
-  <div class="writer" id="writerBar" hidden></div>
   <section class="win" id="winCard" hidden aria-live="polite"></section>
 
   <section class="card" id="entryCard" aria-label="Ronde invoeren" hidden>
@@ -338,7 +342,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
     </div>
     <div>
       <div class="lbl">Verzaakt</div>
-      <div class="seg" role="group" aria-label="Verzaakt">
+      <div class="seg verz" role="group" aria-label="Verzaakt">
         <button id="verzW" aria-pressed="false"></button>
         <button id="verzZ" aria-pressed="false"></button>
       </div>

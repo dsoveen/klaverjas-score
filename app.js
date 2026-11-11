@@ -88,7 +88,7 @@ function totalsOf(list, set) { let w = 0, z = 0; list.forEach(r => { const s = s
 function totals() { return totalsOf(rounds()); }
 
 // ---------- Weergave ----------
-const SECTIONS = ["bootMsg", "board", "screenMsg", "welcome", "whoCard", "writerBar", "winCard", "entryCard", "sheet", "foot", "hist", "groupBox", "rulesBox"];
+const SECTIONS = ["bootMsg", "board", "screenMsg", "welcome", "whoCard", "winCard", "entryCard", "sheet", "foot", "hist", "groupBox", "rulesBox"];
 function show(list) { SECTIONS.forEach(id => { $(id).hidden = !list.includes(id); }); }
 
 function msg(html) { view = "msg"; $("screenMsg").innerHTML = html; show(["screenMsg"]); }
@@ -117,7 +117,7 @@ function renderGroup() {
   const list = rounds(), n = list.length, t = totals(), RR = R();
   const done = n >= RR && editing < 0;
   const writer = isWriter();
-  const vis = ["board", "sheet", "foot", "hist", "groupBox", "rulesBox", "writerBar"];
+  const vis = ["board", "sheet", "foot", "hist", "groupBox", "rulesBox"];
   if (me().player === undefined) vis.push("whoCard");
   if (done) vis.push("winCard"); else if (writer) vis.push("entryCard");
   show(vis);
@@ -136,7 +136,7 @@ function renderGroup() {
   $("playZ").innerHTML = avs("z", "sm") + "<span>" + esc(nz) + "</span>";
   $("verzW").textContent = nw; $("verzZ").textContent = nz;
 
-  renderWho(); renderWriter();
+  renderWho();
   if (done) renderWin(t);
 
   // rijen, nieuwste boven
@@ -158,7 +158,9 @@ function renderGroup() {
     if (writer) tr.addEventListener("click", () => startEdit(i)); else tr.style.cursor = "default";
     tb.appendChild(tr);
   }
-  $("footHint").textContent = writer ? "Tik op een ronde om hem te wijzigen." : "";
+  $("footHint").textContent = writer ? "Tik op een ronde om hem te wijzigen."
+    : cur().writer ? (cur().writerName || "Iemand anders") + " schrijft dit potje."
+    : "Nog niemand schrijft. Kies Ik schrijf bij Groep en instellingen.";
   renderNew(done);
   if (writer && !done) renderForm();
   renderHist(); renderRules();
@@ -178,28 +180,25 @@ function setWho(p) {
   render();
 }
 
-function renderWriter() {
-  const el = $("writerBar"), c = cur();
-  el.classList.toggle("watch", !isWriter());
-  if (isWriter()) {
-    el.innerHTML = '<span><span class="who">Jij schrijft dit potje.</span> De anderen kijken live mee.</span>' +
-      '<span class="act"><button class="btn small ghost" id="stopBtn">Stoppen met schrijven</button></span>';
-    $("stopBtn").onclick = () => { resetDraft(); updateDoc(gRef, { "current.writer": null, "current.writerName": "" }).catch(failWrite); };
-    return;
-  }
-  const wn = c.writerName || "Iemand anders";
-  if (c.writer && askTake) {
-    el.innerHTML = '<span><span class="who">' + esc(wn) + '</span> schrijft nu. Wil jij het overnemen?</span>' +
-      '<span class="act"><button class="btn small ghost" id="takeNo">Nee</button><button class="btn small primary" id="takeYes">Ja, ik schrijf</button></span>';
-    $("takeNo").onclick = () => { askTake = false; render(); };
-    $("takeYes").onclick = () => { askTake = false; takeOver(); };
-    return;
-  }
-  el.innerHTML = '<span>' + (c.writer ? '<span class="who">' + esc(wn) + '</span> schrijft dit potje. Je kijkt mee.' : 'Nog niemand schrijft dit potje.') + '</span>' +
-    '<span class="act"><button class="btn small ' + (c.writer ? "ghost" : "primary") + '" id="takeBtn">Ik schrijf</button></span>';
-  $("takeBtn").onclick = () => { if (c.writer) { askTake = true; render(); } else takeOver(); };
+// Wie schrijft: in Groep en instellingen. Een ander kan het altijd overnemen.
+function writerBlock() {
+  const c = cur(), wn = c.writerName || "Iemand anders";
+  let html = '<div class="blk"><span class="lbl">Wie schrijft</span>';
+  if (isWriter()) html += '<p><b>Jij schrijft dit potje.</b> Een andere speler kan het overnemen met Ik schrijf op de eigen telefoon.</p>';
+  else if (c.writer && askTake) html += '<p>' + esc(wn) + ' schrijft nu. Wil jij het overnemen?</p><div class="actions"><button class="btn small ghost" id="takeNo">Nee</button><button class="btn small primary" id="takeYes">Ja, ik schrijf</button></div>';
+  else html += '<p>' + (c.writer ? '<b>' + esc(wn) + '</b> schrijft dit potje. Jij kijkt mee.' : 'Nog niemand schrijft dit potje.') + '</p><button class="btn small primary" id="takeBtn" style="align-self:flex-start">Ik schrijf</button>';
+  return html + '</div>';
 }
-function takeOver() { resetDraft(); updateDoc(gRef, { "current.writer": uid, "current.writerName": myName() }).catch(failWrite); }
+function bindWriter() {
+  const c = cur();
+  if ($("takeBtn")) $("takeBtn").onclick = () => { if (c.writer) { askTake = true; renderGroupBox(); } else takeOver(); };
+  if ($("takeNo")) $("takeNo").onclick = () => { askTake = false; renderGroupBox(); };
+  if ($("takeYes")) $("takeYes").onclick = () => { askTake = false; takeOver(); };
+}
+function takeOver() {
+  resetDraft();
+  updateDoc(gRef, { "current.writer": uid, "current.writerName": myName() }).then(() => toast("Jij schrijft nu dit potje."), failWrite);
+}
 
 function renderNew(done) {
   const w = $("newWrap");
@@ -411,6 +410,7 @@ function renderGroupBox() {
     (isOwner() ? '<button class="linkish" id="gRotate" style="align-self:flex-start">Nieuwe link maken (de oude werkt dan niet meer)</button>' : '') + '</div>' +
     '<div class="blk"><span class="lbl">Naam van de groep</span><input class="txt" id="gNameIn" maxlength="30" value="' + esc(group.name || "") + '"></div>' +
     '<div class="blk"><span class="lbl">Op deze telefoon ben ik</span><select class="txt" id="gWho">' + opt("", "Ik speel niet mee") + opt("w0", pname("w", 0)) + opt("w1", pname("w", 1)) + opt("z0", pname("z", 0)) + opt("z1", pname("z", 1)) + '</select></div>' +
+    writerBlock() +
     '<div class="blk"><span class="lbl">Spelers en foto\'s</span><div id="playersEd"></div></div>' +
     '<div class="blk"><span class="lbl">Spelregels</span>' +
     '<label class="field"><span class="hnote">Aantal rondes per potje</span><select class="txt" id="gRounds">' + [8, 12, 16, 20, 24].map(n => '<option' + (n === s.rounds ? " selected" : "") + '>' + n + '</option>').join("") + '</select></label>' +
@@ -442,6 +442,7 @@ function renderGroupBox() {
   if ($("dzBtn")) $("dzBtn").onclick = () => { askDanger = true; renderGroupBox(); };
   if ($("dzNo")) $("dzNo").onclick = () => { askDanger = false; renderGroupBox(); };
   if ($("dzYes")) $("dzYes").onclick = () => { askDanger = false; isOwner() ? deleteGroup() : leaveGroup(); };
+  bindWriter();
   renderPlayers();
 }
 // ---------- Spelregels wijzigen tijdens een potje ----------
@@ -606,7 +607,7 @@ async function createGroup() {
     members: { [uid]: { code, at: nowIso() } },
     players: { w: [{ n: ps[0], img: null }, { n: ps[1], img: null }], z: [{ n: ps[2], img: null }, { n: ps[3], img: null }] },
     settings: DEFAULT_SETTINGS,
-    current: { id: newId(), rounds: [], writer: null, writerName: "", startedAt: nowIso() }
+    current: { id: newId(), rounds: [], writer: uid, writerName: "", startedAt: nowIso() }
   };
   if (!navigator.onLine) { $("nMsg").textContent = "Een groep maken kan alleen met internet."; return; }
   $("nCreate").disabled = true; $("nCreate").textContent = "Groep maken…"; $("nMsg").textContent = "";
