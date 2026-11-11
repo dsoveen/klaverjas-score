@@ -65,7 +65,7 @@ Maak een nieuwe groep bij voorkeur in de app op het beginscherm. Wie de groep ma
 
 ## Later iets aanpassen
 
-Verhoog na elke wijziging `VERSIE` in `sw.js`, bijvoorbeeld `klaverjas-2` naar `klaverjas-3`. Dan halen de telefoons de nieuwe bestanden op.
+Verhoog na elke wijziging `VERSIE` in `sw.js` (bijvoorbeeld `klaverjas-12` naar `klaverjas-13`) en `APP_VERSIE` in `app.js` (`1.12` naar `1.13`). Dan halen de telefoons de nieuwe bestanden op, en onderaan in de app zie je welke versie draait.
 
 ## Kosten
 

@@ -5,6 +5,8 @@ import {
   doc, collection, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs, writeBatch, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// Versienummer: verhoog dit samen met VERSIE in sw.js
+const APP_VERSIE = "1.12";
 window.__kjReady = true;
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -718,6 +720,7 @@ $("homeClose").onclick = () => { LS.set("kj-tip-beginscherm", true); $("homeTip"
 
 // ---------- Opstarten ----------
 function boot() {
+  $("ver").textContent = "v" + APP_VERSIE;
   if (!CFG.apiKey || !CFG.projectId) { msg('<h2>Nog niet ingesteld</h2><p>Vul de Firebase-gegevens in bij config.js.</p>'); return; }
   const app = initializeApp({ apiKey: CFG.apiKey, authDomain: CFG.projectId + ".firebaseapp.com", projectId: CFG.projectId });
   try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }

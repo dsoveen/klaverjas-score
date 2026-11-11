@@ -287,6 +287,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 .verzbox[open] { display: flex; flex-direction: column; gap: 8px; }
 .verzbox .hnote { margin: 0; }
 .verzbox.on > summary { color: var(--red); font-weight: 600; }
+.ver { text-align: right; font-size: 11px; color: var(--muted); opacity: .7; font-variant-numeric: tabular-nums; max-width: 520px; margin: 6px auto 0; }
 .setwarn { background: var(--gold-soft); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .setwarn b { color: var(--gold); }
 .setwarn p { margin: 0; }
@@ -415,6 +416,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
     <ul id="rulesList"></ul>
   </details>
 </div>
+<div class="ver" id="ver" aria-label="Versie"></div>
 <canvas id="fx" hidden></canvas>
 <div class="toast" id="toast" hidden role="status"></div>
 
