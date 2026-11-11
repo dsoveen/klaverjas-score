@@ -268,8 +268,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 .glist2 button { text-align: left; padding: 10px 12px; border-radius: 10px; background: var(--sunk); font-weight: 600; }
 .dz { border-top: 1px solid var(--line); padding-top: 14px; }
 .btn.outline { border: 1px solid var(--red); color: var(--red); background: transparent; }
-.hometip { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; background: var(--felt-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.45; }
-.hometip .del { color: var(--muted); font-size: 18px; padding: 0 4px; flex: none; }
+/* Opvallende tip in Safari: oranje met donkere tekst, in licht en donker gelijk */
+.hometip { --tip-bg: #f28c28; --tip-fg: #1f1300;
+  display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; background: var(--tip-bg); color: var(--tip-fg);
+  border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.hometip .nowrap { white-space: nowrap; }
+.hometip .shareico { width: 1.25em; height: 1.25em; vertical-align: -0.25em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hometip .del { color: var(--tip-fg); font-size: 20px; padding: 0 4px; flex: none; opacity: .75; }
 .qr { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .qrimg { background: #ffffff; padding: 10px; border-radius: 12px; width: min(260px, 100%); line-height: 0; }
 .qrimg svg { width: 100%; height: auto; display: block; }
@@ -320,7 +325,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
   </section>
 
   <div class="hometip" id="homeTip" hidden>
-    <span><b>Tip:</b> zet het scoreblok op je beginscherm. Tik in Safari op <b>Deel</b> en kies <b>Zet op beginscherm</b>. De groep gaat mee.</span>
+    <span><b>Zet het scoreblok op je beginscherm.</b> Tik in Safari op <b class="nowrap">Deel <svg class="shareico" viewBox="0 0 24 24" role="img" aria-label="(het vierkantje met de pijl omhoog)"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M9 10H6v11h12V10h-3"/></svg></b> en kies <b>Zet op beginscherm</b>. De groep gaat mee.</span>
     <button class="del" id="homeClose" aria-label="Tip sluiten">×</button>
   </div>
   <section class="pick" id="whoCard" hidden></section>
