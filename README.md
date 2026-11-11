@@ -11,7 +11,7 @@ Een scoreblok voor klaverjassen dat je als app op je beginscherm zet. Elke tafel
 | `manifest.webmanifest`, `*.png` | Naam en icoon op het beginscherm |
 | `sw.js` | Zorgt dat de app ook offline opent |
 
-De Firestore-regels staan in `firestore.rules`. Dat bestand plak je in Firebase. Het hoeft niet op GitHub.
+De Firestore-regels staan niet in deze repository. Ze staan in Firebase zelf, bij **Firestore → Regels**. Pas ze daar aan als dat nodig is.
 
 ## 1. Firebase instellen (eenmalig)
 
@@ -23,7 +23,7 @@ Het project `klaverjas-score-database` bestaat al. Er moeten nog drie dingen geb
 
 **Regels plakken**
 1. Ga naar **Firestore → Regels**.
-2. Vervang alles door de inhoud van `firestore.rules` en klik op **Publiceren**.
+2. Vervang alles door de regels voor deze app en klik op **Publiceren**.
 
 **Anoniem inloggen aanzetten**
 1. Ga naar **Authentication → Aan de slag → Sign-in method**.
