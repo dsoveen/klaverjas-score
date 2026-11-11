@@ -231,7 +231,7 @@ function newGame() {
 
 // ---------- Invoer (alleen de schrijver) ----------
 function blank() { return { p: null, w: null, z: null, rw: 0, rz: 0, v: null }; }
-function resetDraft() { editing = -1; draft = blank(); }
+function resetDraft() { editing = -1; draft = blank(); const vb = $("verzBox"); if (vb) vb.open = false; }
 function draftComplete() { return draft.w !== null && draft.z !== null && draft.w + draft.z === 162; }
 
 function renderForm() {
@@ -242,6 +242,9 @@ function renderForm() {
   $("playW").setAttribute("aria-pressed", draft.p === "w"); $("playZ").setAttribute("aria-pressed", draft.p === "z");
   $("colW").classList.toggle("playing", draft.p === "w"); $("colZ").classList.toggle("playing", draft.p === "z");
   $("verzW").setAttribute("aria-pressed", draft.v === "w"); $("verzZ").setAttribute("aria-pressed", draft.v === "z");
+  if (draft.v) $("verzBox").open = true;
+  $("verzBox").classList.toggle("on", !!draft.v);
+  $("verzSum").textContent = draft.v ? "Verzaakt: " + name(draft.v) : "Verzaakt?";
   if (document.activeElement !== $("ptsW")) $("ptsW").value = draft.w === null ? "" : draft.w;
   if (document.activeElement !== $("ptsZ")) $("ptsZ").value = draft.z === null ? "" : draft.z;
   $("roemWv").textContent = draft.rw; $("roemZv").textContent = draft.rz;

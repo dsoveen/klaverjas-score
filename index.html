@@ -274,6 +274,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 .qrimg { background: #ffffff; padding: 10px; border-radius: 12px; width: min(260px, 100%); line-height: 0; }
 .qrimg svg { width: 100%; height: auto; display: block; }
 .qr p { margin: 0; font-size: 14px; color: var(--muted); max-width: 32ch; }
+/* Verzaken is een uitzondering: dichtgeklapt tot het nodig is */
+.verzbox > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); padding: 4px 0; }
+.verzbox > summary::-webkit-details-marker { display: none; }
+.verzbox > summary::before { content: "▸"; font-size: 12px; transition: transform .15s; }
+.verzbox[open] > summary::before { transform: rotate(90deg); }
+.verzbox[open] { display: flex; flex-direction: column; gap: 8px; }
+.verzbox .hnote { margin: 0; }
+.verzbox.on > summary { color: var(--red); font-weight: 600; }
 .setwarn { background: var(--gold-soft); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .setwarn b { color: var(--gold); }
 .setwarn p { margin: 0; }
@@ -350,13 +358,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
         </div>
       </div>
     </div>
-    <div>
-      <div class="lbl">Verzaakt</div>
+    <details class="verzbox" id="verzBox">
+      <summary id="verzSum">Verzaakt?</summary>
+      <p class="hnote">Alleen als een koppel niet bekende, troefde of overtroefde terwijl dat moest. Kies wie verzaakte.</p>
       <div class="seg verz" role="group" aria-label="Verzaakt">
         <button id="verzW" aria-pressed="false"></button>
         <button id="verzZ" aria-pressed="false"></button>
       </div>
-    </div>
+    </details>
     <div class="preview" id="preview" aria-live="polite"></div>
     <div class="summary" id="summary" hidden aria-live="polite">
       <div class="lbl" id="sumTitle">Klopt deze ronde?</div>
