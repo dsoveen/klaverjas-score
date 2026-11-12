@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Versienummer: verhoog dit samen met VERSIE in sw.js
-const APP_VERSIE = "1.13";
+const APP_VERSIE = "1.14";
 window.__kjReady = true;
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -481,7 +481,7 @@ function qrBlock(text) {
   } catch (e) { console.warn(e); }
   if (!svg) return '<p class="hnote">De QR-code kan nu niet worden getoond. Open de app één keer met internet, daarna werkt het ook offline.</p>';
   return '<div class="qr" id="qrBox"><div class="qrimg" role="img" aria-label="QR-code met de uitnodigingslink">' + svg + '</div>' +
-    '<p>Laat de ander deze code scannen met de camera van de telefoon. Zet daarna in Safari het scoreblok op het beginscherm.</p></div>';
+    '<p>Laat de ander deze code scannen met de camera van de telefoon. Zet daarna in Safari de app op het beginscherm.</p></div>';
 }
 
 // ---------- Spelregels wijzigen tijdens een potje ----------
@@ -715,7 +715,7 @@ $("nCreate").onclick = createGroup;
 $("nBack").onclick = () => next();
 $("nJoin").onclick = () => {
   const j = parseJoin($("nLink").value);
-  if (!j) { $("nMsg").textContent = "Dit is geen uitnodigingslink van het scoreblok."; return; }
+  if (!j) { $("nMsg").textContent = "Dit is geen uitnodigingslink van Klaverjas live score."; return; }
   $("nLink").value = ""; joinGroup(j.id, j.code);
 };
 addEventListener("hashchange", () => { const j = parseJoin(location.hash); if (j && uid) joinGroup(j.id, j.code); });

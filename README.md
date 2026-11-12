@@ -1,4 +1,4 @@
-# Klaverjas Scoreblok
+# Klaverjas live score
 
 Een scoreblok voor klaverjassen dat je als app op je beginscherm zet. Elke tafel maakt een eigen groep en nodigt de andere spelers uit met een link. Eén speler houdt de score bij; de anderen zien de stand live op hun eigen telefoon. Het blok telt nat, pit, roem en verzaken zelf, en houdt per groep een overzicht van alle potjes bij.
 

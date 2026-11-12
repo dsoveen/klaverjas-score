@@ -1,7 +1,7 @@
 {
-  "name": "Klaverjas Scoreblok",
+  "name": "Klaverjas live score",
   "short_name": "Klaverjas live",
-  "description": "Scoreblok voor klaverjassen",
+  "description": "Klaverjas live score: de stand live op ieders telefoon",
   "lang": "nl",
   "scope": "./",
   "display": "standalone",
