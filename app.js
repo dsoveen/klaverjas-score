@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Versienummer: verhoog dit samen met VERSIE in sw.js
-const APP_VERSIE = "1.14";
+const APP_VERSIE = "1.15";
 window.__kjReady = true;
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -444,6 +444,7 @@ function renderGroupBox() {
     (pendingSet && pendingSet.key === "rounds" ? setWarning() : '') +
     '<label class="field"><span class="hnote">Bij verzaken krijgt de tegenpartij 162 plus</span><select class="txt" id="gVerz"><option value="alle"' + (s.verzRoem !== "eigen" ? " selected" : "") + '>alle opgegeven roem</option><option value="eigen"' + (s.verzRoem === "eigen" ? " selected" : "") + '>alleen hun eigen roem</option></select></label>' +
     (pendingSet && pendingSet.key === "verzRoem" ? setWarning() : '') + '</div>' +
+    '<div class="blk"><span class="lbl">Uiterlijk op deze telefoon</span><select class="txt" id="gSkin"><option value=""' + (!LS.get("kj-skin", "") ? " selected" : "") + '>Groen laken</option><option value="cafe"' + (LS.get("kj-skin", "") === "cafe" ? " selected" : "") + '>Bruin café</option></select></div>' +
     '<div class="blk"><span class="lbl">Andere groepen</span><div class="glist2">' + others.map(g => '<button data-g="' + esc(g.id) + '">' + esc(g.name || "Naamloze groep") + '</button>').join("") + '</div>' +
     '<button class="btn small ghost" id="gNew" style="align-self:flex-start">Nieuwe groep of lid worden</button></div>' +
     '<div class="blk dz">';
@@ -461,6 +462,7 @@ function renderGroupBox() {
   $("gNameIn").oninput = e => { clearTimeout(nameT); const v = e.target.value.trim(); nameT = setTimeout(() => { if (v) gUpdate({ name: v }).catch(failWrite); }, 700); };
   $("gNameIn").onblur = () => setTimeout(render, 800);
   $("gWho").onchange = e => setWho(e.target.value || null);
+  $("gSkin").onchange = e => setSkin(e.target.value);
   $("gRounds").onchange = e => askSetting("rounds", +e.target.value);
   $("gVerz").onchange = e => askSetting("verzRoem", e.target.value);
   if ($("setNo")) $("setNo").onclick = () => { pendingSet = null; renderGroupBox(); };
@@ -473,6 +475,14 @@ function renderGroupBox() {
   bindWriter();
   renderPlayers();
 }
+// ---------- Uiterlijk (alleen deze telefoon) ----------
+function setSkin(skin) {
+  LS.set("kj-skin", skin);
+  if (skin) document.documentElement.dataset.skin = skin; else delete document.documentElement.dataset.skin;
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = skin === "cafe" ? "#2a1b12" : "#1d6a48";
+  toast(skin === "cafe" ? "Proost! Welkom in het bruin café." : "Terug op het groene laken.");
+}
+
 // ---------- QR-code van de uitnodiging ----------
 function qrBlock(text) {
   let svg = null;

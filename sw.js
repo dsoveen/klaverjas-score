@@ -1,5 +1,5 @@
 // Houdt het scoreblok bruikbaar zonder internet. Verhoog VERSIE na een wijziging.
-const VERSIE = "klaverjas-14";
+const VERSIE = "klaverjas-15";
 const BASIS = ["./", "./index.html", "./app.js", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

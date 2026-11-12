@@ -6,6 +6,10 @@
 <title>Klaverjas live score</title>
 <meta name="description" content="Klaverjas live score: de stand live op ieders telefoon. Nat, pit, roem en verzaken automatisch geteld.">
 <meta name="theme-color" content="#1d6a48">
+<script>
+  // Uiterlijk per telefoon, vóór het tekenen toepassen zodat er niets knippert
+  try { var skin = JSON.parse(localStorage.getItem("kj-skin") || '""'); if (skin) { document.documentElement.dataset.skin = skin; document.querySelector('meta[name="theme-color"]').content = "#2a1b12"; } } catch (e) {}
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15,7 +19,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Cabin+Sketch:wght@400;700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 html { -webkit-text-size-adjust: 100%; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -227,6 +231,53 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--felt); outl
 .rules { font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 65ch; }
 .rules summary { cursor: pointer; font-weight: 600; color: var(--fg); padding: 4px 0; }
 .rules ul { padding-left: 18px; margin: 6px 0; }
+
+/* ===== Uiterlijk "Bruin café": donker hout, krijtbord, koper. Bewust één (donkere) look. ===== */
+:root[data-skin="cafe"] {
+  --bg: #2a1b12; --surface: #3a2619; --sunk: #24170f; --fg: #f3e7d3; --muted: #c4a988; --line: #5b3e28;
+  --felt: #d9a03f; --felt-ink: #24170f; --felt-soft: #4b3420;
+  --red: #ea6f63; --red-soft: #4d2520; --gold: #f2c46c; --gold-soft: #4a3a1d;
+  --s1: #74ade0; --s2: #ea8c62; --s3: #b9a2e6; --s4: #72c9ad; --av-ink: #1c120b;
+  --chalk: #f1eee4; --board: #1e2a24; --frame: #6e4524;
+  --f-num: "Cabin Sketch", "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme: dark;
+}
+:root[data-skin="cafe"] body {
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 37px),
+    linear-gradient(180deg, #31201544, #1c120b66);
+}
+:root[data-skin="cafe"] .board { background: var(--bg); }
+:root[data-skin="cafe"] .board-top .gname { color: var(--gold); letter-spacing: .03em; }
+/* De stand op een krijtbord in een houten lijst */
+:root[data-skin="cafe"] .totals {
+  background: radial-gradient(120% 140% at 30% 20%, #2a3a32 0%, var(--board) 55%, #16201b 100%);
+  color: var(--chalk); border: 7px solid var(--frame); border-radius: 10px;
+  box-shadow: inset 0 0 26px rgba(0,0,0,.55), 0 6px 16px rgba(0,0,0,.45);
+}
+:root[data-skin="cafe"] .tot + .tot { border-left: 2px dashed rgba(241,238,228,.22); }
+:root[data-skin="cafe"] .tot .big { font-size: 60px; font-weight: 700; letter-spacing: .02em; text-shadow: 0 0 1px rgba(241,238,228,.6); }
+:root[data-skin="cafe"] .tname, :root[data-skin="cafe"] .lead { color: var(--chalk); }
+:root[data-skin="cafe"] .tot .av { border-color: var(--board); }
+:root[data-skin="cafe"] .progress { background: var(--sunk); height: 5px; }
+/* Panelen als donkere houten planken */
+:root[data-skin="cafe"] .card, :root[data-skin="cafe"] .sheet, :root[data-skin="cafe"] .hist,
+:root[data-skin="cafe"] .players, :root[data-skin="cafe"] .pick {
+  background: linear-gradient(180deg, #402a1b, var(--surface)); border-color: var(--line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 4px 14px rgba(0,0,0,.35);
+}
+:root[data-skin="cafe"] .hist h2, :root[data-skin="cafe"] .intro h2, :root[data-skin="cafe"] .win h2 { color: var(--gold); }
+:root[data-skin="cafe"] .sheet td { font-family: var(--f-num); font-size: 19px; }
+:root[data-skin="cafe"] .sheet th { color: var(--gold); }
+/* Het potje voorbij: een rond bierviltje */
+:root[data-skin="cafe"] .win { background: radial-gradient(circle at 50% 35%, #f6ead2 0%, #ecd9b4 70%, #d8c08f 100%); color: #3a2416; border: 3px solid #b5302a; }
+:root[data-skin="cafe"] .win .lbl { color: #b5302a; }
+:root[data-skin="cafe"] .win h2 { color: #3a2416; }
+:root[data-skin="cafe"] .win .line, :root[data-skin="cafe"] .win .stats b, :root[data-skin="cafe"] .win .stats span:nth-child(3n+1) { color: #6a4a2f; }
+:root[data-skin="cafe"] .win .btn.ghost { background: #e2cda2; color: #3a2416; }
+:root[data-skin="cafe"] .win .avs.lg .av { border-color: #f1e3c6; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* Groepen */

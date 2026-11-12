@@ -62,6 +62,7 @@ Maak een nieuwe groep bij voorkeur in de app op het beginscherm. Wie de groep ma
 - **Nieuwe link.** De maker van de groep kan bij Groep en instellingen een nieuwe link maken. Wie al lid is, blijft lid. De oude link werkt niet meer voor nieuwe leden.
 - **Spelregels per groep.** Het aantal rondes en hoe roem bij verzaken telt, stel je in bij Groep en instellingen.
 - **Meer groepen.** Je kunt lid zijn van meerdere groepen en wisselt tussen groepen via de groepsnaam bovenin.
+- **Uiterlijk.** Per telefoon kies je bij Groep en instellingen tussen *Groen laken* en *Bruin café* (hout, krijtbord en een bierviltje als het potje uit is).
 - **Verlaten of verwijderen.** Spelers kunnen een groep verlaten. De maker kan de groep met alle potjes verwijderen.
 
 ## Beheer
